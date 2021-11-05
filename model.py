@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import json
+import datetime
 
 def _preprocess_data(data):
     """Private helper function to preprocess data for model prediction.
@@ -58,7 +59,98 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
+    #predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
+
+    #Generating Average temperature column; dropping all other temp columns
+    temp_columns = ['Seville_temp_max','Madrid_pressure', 'Valencia_temp_max', 'Valencia_temp', 'Seville_temp','Valencia_temp_min', 'Barcelona_temp_max', 'Madrid_temp_max','Barcelona_temp', 'Bilbao_temp_min', 'Bilbao_temp','Barcelona_temp_min', 'Bilbao_temp_max', 'Seville_temp_min','Madrid_temp', 'Madrid_temp_min']
+    df_mean = feature_vector_df[temp_columns]
+    temp_means = df_mean.mean(axis=1)
+    feature_vector_df.insert(len(feature_vector_df.columns), 'cities_average_temp', temp_means, allow_duplicates=False)
+    feature_vector_df = feature_vector_df.drop(temp_columns, axis=1)
+
+    #Making average column for Madrid and Seville humidity; dropping both columns
+    humid_columns = ['Madrid_humidity', 'Seville_humidity']
+    humid_mean_df = feature_vector_df[humid_columns]
+    humid_means = humid_mean_df.mean(axis=1)
+    feature_vector_df.insert(2, 'Madrid_Seville_humidity', humid_means, allow_duplicates=False)
+    feature_vector_df = feature_vector_df.drop(humid_columns, axis=1)
+
+    #Re-engineering time column
+    def extract_year(datetime):
+        temp = datetime.split(" ")
+        date = None
+        if '/' in temp[0]:
+            date = temp[0].split('/')
+        else:
+            date = temp[0].split('-')
+        return int(date[0])
+
+    def extract_month(datetime):
+        temp = datetime.split(" ")
+        date = None
+        if '/' in temp[0]:
+            date = temp[0].split('/')
+        else:
+            date = temp[0].split('-')
+        return int(date[1])
+
+    def extract_day(datetime):
+        temp = datetime.split(" ")
+        date = None
+        if '/' in temp[0]:
+            date = temp[0].split('/')
+        else:
+            date = temp[0].split('-')
+        return int(date[2])
+
+    def extract_hour(datetime):
+        temp = datetime.split(" ")
+        date = None
+        if '/' in temp[0]:
+            date = temp[0].split('/')
+        else:
+            date = temp[0].split('-')
+        time = temp[1].split(':')
+        return int(time[0])
+
+    def extract_day_of_week(info):
+        temp = info.split(" ")
+        date = None
+        if '/' in temp[0]:
+            date = temp[0].split('/')
+        else:
+            date = temp[0].split('-')
+        time = temp[1].split(':')
+        ans = datetime.date(int(date[0]), int(date[1]), int(date[2]))
+        weekday = ans.isocalendar()[2]
+        return weekday
+
+    feature_vector_df['Year'] = feature_vector_df['time'].apply(extract_year)
+    feature_vector_df['Month'] = feature_vector_df['time'].apply(extract_month)
+    feature_vector_df['Day'] = feature_vector_df['time'].apply(extract_day)
+    feature_vector_df['Hour'] = feature_vector_df['time'].apply(extract_hour)
+    feature_vector_df['Day_of_Week'] = feature_vector_df['time'].apply(extract_day_of_week)
+
+    #Dropping time and other problematic columns:
+    feature_vector_df = feature_vector_df.drop('time', axis=1)
+    feature_vector_df = feature_vector_df.drop('Seville_pressure', axis=1)
+    feature_vector_df = feature_vector_df.drop('Valencia_wind_deg', axis=1)
+    feature_vector_df = feature_vector_df.drop('Valencia_pressure', axis=1)
+
+    #Reordering columns
+    ordered_columns = ['Year', 'Month', 'Day', 'Hour', 'Day_of_Week', 'Madrid_wind_speed', 'Madrid_Seville_humidity', 
+        'Bilbao_rain_1h', 'Valencia_wind_speed', 'Bilbao_clouds_all', 'Bilbao_wind_speed',
+        'Seville_clouds_all', 'Bilbao_wind_deg', 'Barcelona_wind_speed',
+        'Barcelona_wind_deg', 'Madrid_clouds_all', 'Seville_wind_speed',
+        'Barcelona_rain_1h', 'Seville_rain_1h', 'Bilbao_snow_3h',
+        'Barcelona_pressure', 'Seville_rain_3h', 'Madrid_rain_1h',
+        'Barcelona_rain_3h', 'Valencia_snow_3h', 'Madrid_weather_id',
+        'Barcelona_weather_id', 'Bilbao_pressure', 'Seville_weather_id',
+        'Bilbao_weather_id', 'Valencia_humidity', 'cities_average_temp']
+    feature_vector_df = feature_vector_df[ordered_columns]
+
+    predict_vector = feature_vector_df
+    #predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
     # ------------------------------------------------------------------------
 
     return predict_vector
