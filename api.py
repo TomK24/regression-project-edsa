@@ -31,7 +31,8 @@ app = Flask(__name__)
 # Please update this path to reflect your own trained model.
 static_model = load_model(
     #path_to_model='assets/trained-models/load_shortfall_simple_lm_regression.pkl') #old path
-    path_to_model='assets/trained-models/DecisionTree_depth=6_Tom.pkl')
+    #path_to_model='assets/trained-models/DecisionTree_depth=6_Tom.pkl')
+    path_to_model = "assets/trained-models/RandomForest_Depth8_estimators100-Thomas.pkl")
 
 print ('-'*40)
 print ('Model successfully loaded')
