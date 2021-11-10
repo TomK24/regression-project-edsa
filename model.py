@@ -149,6 +149,8 @@ def _preprocess_data(data):
         'Bilbao_weather_id', 'Valencia_humidity', 'cities_average_temp']
     feature_vector_df = feature_vector_df[ordered_columns]
 
+    feature_vector_df = feature_vector_df.to_numpy() #Model used by API was trained without feature labels
+
     predict_vector = feature_vector_df
     #predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
     # ------------------------------------------------------------------------
